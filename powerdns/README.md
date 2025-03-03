@@ -9,6 +9,6 @@ This was created for testing (and screwing up) with syncing between Netbox and P
 
 
 ### pdns_sync.py ###
-This is  Netbox custom script which can be placed in your custom scripts directory.  The script will pull all zones out of Netbox (netbox-dns-plugin) create the zone in PowerDNS, and sync all records from that zone into PowerDNS via the PowerDNS API.  
+This is  Netbox custom script which can be placed in your Netbox custom scripts directory.  The script will pull all zones out of Netbox (netbox-dns-plugin) create the zone in PowerDNS, and sync all records from that zone into PowerDNS via the PowerDNS API.  
 
 - Note, PowerDNS api can be much more stringent in enforcing RFC compliance than Netbox.  You may have to massage the data if you run into errors.
