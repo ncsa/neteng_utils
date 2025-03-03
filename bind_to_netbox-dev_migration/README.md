@@ -18,10 +18,10 @@ Caveats:
 	- It assumes that you have already created the relevant prefixes in IPAM->Prefixes.   If not it will throw an error.  This is by design as in our case, not all DNS entries we host are on our IP space.  
 	- If you have run this script previously it will add new records but will not delete records that are no longer present in the zone files.
 	- If you have multiple A records that point to the same IP address, it will over write the DNS Name field with the most recently processed information.
-	```Example:
-		- foo.bar.com 	1.2.3.4\n
-		- foo1.bar.com	1.2.3.4\n
-		- foo2.bar.com	1.2.3.4\n
+	```  Example:
+		- foo.bar.com 	1.2.3.4
+		- foo1.bar.com	1.2.3.4
+		- foo2.bar.com	1.2.3.4
 	```
 	
 	The end result for 1.2.3.4 DNS Name will be foo2.bar.com   If you need those addition records, they need to be manually placed in the "Records" section of the netbox-dns-plugin section.
