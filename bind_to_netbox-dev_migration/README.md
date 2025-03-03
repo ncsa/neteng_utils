@@ -19,9 +19,9 @@ Caveats:
 	- If you have run this script previously it will add new records but will not delete records that are no longer present in the zone files.
 	- If you have multiple A records that point to the same IP address, it will over write the DNS Name field with the most recently processed information.
 	```Example:
-		- foo.bar.com 	1.2.3.4
-		- foo1.bar.com	1.2.3.4
-		- foo2.bar.com	1.2.3.4
+		- foo.bar.com 	1.2.3.4\n
+		- foo1.bar.com	1.2.3.4\n
+		- foo2.bar.com	1.2.3.4\n
 	```
 	
 	The end result for 1.2.3.4 DNS Name will be foo2.bar.com   If you need those addition records, they need to be manually placed in the "Records" section of the netbox-dns-plugin section.
