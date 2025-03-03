@@ -3,7 +3,7 @@
 import requests
 
 # PowerDNS API Configuration
-API_URL = "http://<netdox-api>:8081/api/v1/servers/localhost/zones"  # Update with your PowerDNS API URL
+API_URL = "http://<powerdns-api>:8081/api/v1/servers/localhost/zones"  # Update with your PowerDNS API URL
 API_KEY = "<API KEY>"  # Replace with your actual API key
 
 HEADERS = {
