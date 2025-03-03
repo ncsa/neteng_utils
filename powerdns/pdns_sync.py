@@ -29,7 +29,7 @@ class PdnsZoneSync(Script):
 
         response = ''
 
-        # 🔹 Automatically fetch ALL zones
+        # Automatically fetch ALL zones
         zones = Zone.objects.all()
         if not zones:
             return "No zones found in NetBox."
@@ -76,7 +76,7 @@ class PdnsZoneSync(Script):
         for record in pdns_zone.records:
             if record['type'] not in SUPPORTED_TYPES:
                 continue
-            if not self.is_rrset_managed(record):  # 🔹 Fix: Ensure this method exists
+            if not self.is_rrset_managed(record):  # Fix: Ensure this method exists
                 self.log_debug(f'PDNS Record not managed by netbox: {record}')
                 pdns_unmanaged_rrsets.add((record['name'], record['type']))
                 continue
@@ -133,7 +133,7 @@ class PdnsZoneSync(Script):
         return f'Zone {zone.name} synced successfully.\n'
 
     def is_rrset_managed(self, rrset) -> bool:
-        """ 🔹 Added Back: Checks if RRSet is managed by NetBox """
+        """ Added Back: Checks if RRSet is managed by NetBox """
         if MANAGED_COMMENT and MANAGED_ACCOUNT:
             for comment in rrset.get("comments", []):
                 if comment.get('content') == MANAGED_COMMENT and comment.get('account') == MANAGED_ACCOUNT:
