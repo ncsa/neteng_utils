@@ -1,4 +1,4 @@
-Netbox Tenant Validator
+#### Netbox Tenant Validator
 
 Credit to:  Reddit.com/u/pythbit
 
@@ -6,10 +6,10 @@ Credit to:  Reddit.com/u/pythbit
 
 Overview:
 
-Due to limitations of Netbox, IP Address do not directly inherit permissions from the prefixes that they are part of it.   This causes issues when trying to setup permissions to restrict users from only modifying prefixes that they own.  This Tenant validator will check to make sure correct permissions exist on the Prefix before allowing the user to allocate an IP address inside of that Prefix.
+Due to limitations of Netbox, IP Addresses do not directly inherit permissions from the prefixes that they are part of.   This causes issues when trying to setup permissions to restrict users from only modifying prefixes that they own.  This tenant validator will check to make sure correct permissions exist on the prefix before allowing the user to allocate an IP address inside of that prefix.
 
 
- How to use:
+#### How to use:
 
 Place the ipam.py script inside the directory "/opt/netbox/netbox/validators" .   Then add this line to your /opt/netbox/netbox/netbox/confiuration.py file:
 
