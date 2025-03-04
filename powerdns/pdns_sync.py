@@ -139,4 +139,3 @@ class PdnsZoneSync(Script):
                 if comment.get('content') == MANAGED_COMMENT and comment.get('account') == MANAGED_ACCOUNT:
                     return True
         return False
-
