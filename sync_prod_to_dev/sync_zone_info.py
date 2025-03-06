@@ -26,10 +26,10 @@ DEV_HEADERS = {
     "Accept": "application/json"
 }
 
-# ✅ Fields to Exclude Before Sending Data
+# Fields to Exclude Before Sending Data
 EXCLUDE_FIELDS = ["id", "url", "display", "created", "last_updated"]
 
-# ✅ Matching Fields for Each Endpoint
+# Matching Fields for Each Endpoint
 MATCH_FIELDS = {
     "contacts": "contact_id",
     "nameservers": "name",
@@ -52,7 +52,7 @@ def fetch_objects(base_url, headers, endpoint, match_field):
                 objects[obj[match_field]] = obj  # Store objects by unique match field
             next_url = data.get("next")  # Handle pagination
         else:
-            print(f"❌ Error fetching {endpoint} from {base_url}: {response.text}")
+            print(f"Error fetching {endpoint} from {base_url}: {response.text}")
             return {}
 
     return objects
@@ -61,31 +61,31 @@ def clean_zone_data(zone, dev_views, dev_nameservers, dev_registrars):
     """Remove unwanted fields and replace references with IDs from Development instance."""
     cleaned_zone = {k: v for k, v in zone.items() if k not in EXCLUDE_FIELDS}
 
-    # ✅ Remove required fields from payload if they are None
+    # Remove required fields from payload if they are None
     required_fields = ["registrar", "registrant", "tech_c", "admin_c", "billing_c"]
     for field in required_fields:
         if cleaned_zone.get(field) is None:
             del cleaned_zone[field]  # Remove from API request entirely
 
 
-    # ✅ Convert `view` reference
+    # Convert `view` reference
     if isinstance(cleaned_zone.get("view"), dict):
         view_name = cleaned_zone["view"]["name"]
         cleaned_zone["view"] = dev_views.get(view_name, {}).get("id")
 
-    # ✅ Convert `nameservers` references
+    # Convert `nameservers` references
     if "nameservers" in cleaned_zone:
         cleaned_zone["nameservers"] = [
             dev_nameservers.get(ns["name"], {}).get("id")
             for ns in cleaned_zone["nameservers"] if ns["name"] in dev_nameservers
         ]
 
-    # ✅ Convert `soa_mname` reference
+    # Convert `soa_mname` reference
     if isinstance(cleaned_zone.get("soa_mname"), dict):
         soa_name = cleaned_zone["soa_mname"]["name"]
         cleaned_zone["soa_mname"] = dev_nameservers.get(soa_name, {}).get("id")
 
-    # ✅ Convert `registrar` reference
+    # Convert `registrar` reference
     if isinstance(cleaned_zone.get("registrar"), dict):
         registrar_name = cleaned_zone["registrar"]["name"]
         cleaned_zone["registrar"] = dev_registrars.get(registrar_name, {}).get("id")
@@ -93,30 +93,30 @@ def clean_zone_data(zone, dev_views, dev_nameservers, dev_registrars):
     return cleaned_zone
 
 
-    # ✅ Ensure required fields are not null
+    # Ensure required fields are not null
     required_fields = ["registrar", "registrant", "tech_c", "admin_c", "billing_c"]
     for field in required_fields:
         if cleaned_zone.get(field) is None:
             cleaned_zone[field] = None  # Explicitly set to null
 
-    # ✅ Convert `view` reference
+    # Convert `view` reference
     if isinstance(cleaned_zone.get("view"), dict):
         view_name = cleaned_zone["view"]["name"]
         cleaned_zone["view"] = dev_views.get(view_name, {}).get("id")
 
-    # ✅ Convert `nameservers` references
+    # Convert `nameservers` references
     if "nameservers" in cleaned_zone:
         cleaned_zone["nameservers"] = [
             dev_nameservers.get(ns["name"], {}).get("id")
             for ns in cleaned_zone["nameservers"] if ns["name"] in dev_nameservers
         ]
 
-    # ✅ Convert `soa_mname` reference
+    # Convert `soa_mname` reference
     if isinstance(cleaned_zone.get("soa_mname"), dict):
         soa_name = cleaned_zone["soa_mname"]["name"]
         cleaned_zone["soa_mname"] = dev_nameservers.get(soa_name, {}).get("id")
 
-    # ✅ Convert `registrar` reference
+    # Convert `registrar` reference
     if isinstance(cleaned_zone.get("registrar"), dict):
         registrar_name = cleaned_zone["registrar"]["name"]
         cleaned_zone["registrar"] = dev_registrars.get(registrar_name, {}).get("id")
@@ -124,24 +124,24 @@ def clean_zone_data(zone, dev_views, dev_nameservers, dev_registrars):
     return cleaned_zone
 
 
-    # ✅ Convert `view` reference
+    # Convert `view` reference
     if isinstance(cleaned_zone.get("view"), dict):
         view_name = cleaned_zone["view"]["name"]
         cleaned_zone["view"] = dev_views.get(view_name, {}).get("id")
 
-    # ✅ Convert `nameservers` references
+    # Convert `nameservers` references
     if "nameservers" in cleaned_zone:
         cleaned_zone["nameservers"] = [
             dev_nameservers.get(ns["name"], {}).get("id")
             for ns in cleaned_zone["nameservers"] if ns["name"] in dev_nameservers
         ]
 
-    # ✅ Convert `soa_mname` reference
+    # Convert `soa_mname` reference
     if isinstance(cleaned_zone.get("soa_mname"), dict):
         soa_name = cleaned_zone["soa_mname"]["name"]
         cleaned_zone["soa_mname"] = dev_nameservers.get(soa_name, {}).get("id")
 
-    # ✅ Convert `registrar` reference
+    # Convert `registrar` reference
     if isinstance(cleaned_zone.get("registrar"), dict):
         registrar_name = cleaned_zone["registrar"]["name"]
         cleaned_zone["registrar"] = dev_registrars.get(registrar_name, {}).get("id")
@@ -152,7 +152,7 @@ def clean_view_data(view, dev_prefixes):
     """Remove unwanted fields and replace references with IDs from Development instance."""
     cleaned_view = {k: v for k, v in view.items() if k not in EXCLUDE_FIELDS}
 
-    # ✅ Convert `prefixes` references
+    # Convert `prefixes` references
     if "prefixes" in cleaned_view and isinstance(cleaned_view["prefixes"], list):
         cleaned_view["prefixes"] = [
             dev_prefixes.get(prefix["prefix"], {}).get("id")
@@ -166,10 +166,10 @@ def sync_objects(endpoint_key, dev_views=None, dev_nameservers=None, dev_registr
     endpoint = API_ENDPOINTS[endpoint_key]
     match_field = MATCH_FIELDS[endpoint_key]
 
-    print(f"🔄 Fetching {endpoint_key} from Production...")
+    print(f"Fetching {endpoint_key} from Production...")
     prod_objects = fetch_objects(PROD_NETBOX_URL, PROD_HEADERS, endpoint, match_field)
 
-    print(f"🔄 Fetching {endpoint_key} from Development...")
+    print(f"Fetching {endpoint_key} from Development...")
     dev_objects = fetch_objects(DEV_NETBOX_URL, DEV_HEADERS, endpoint, match_field)
 
     for obj_match, prod_obj in prod_objects.items():
@@ -181,17 +181,17 @@ def sync_objects(endpoint_key, dev_views=None, dev_nameservers=None, dev_registr
             cleaned_obj = {k: v for k, v in prod_obj.items() if k not in EXCLUDE_FIELDS}
 
         if obj_match not in dev_objects:
-            # 🆕 Create new object in Development
+            # Create new object in Development
             print(f"➕ Creating {endpoint_key}: {prod_obj['name']} ({obj_match})")
             response = requests.post(f"{DEV_NETBOX_URL}{endpoint}", headers=DEV_HEADERS, json=cleaned_obj)
         else:
-            # 🔄 Update existing object in Development if changed
+            # Update existing object in Development if changed
             dev_obj_id = dev_objects[obj_match]["id"]
             print(f"✏️ Updating {endpoint_key}: {prod_obj['name']} ({obj_match})")
             response = requests.patch(f"{DEV_NETBOX_URL}{endpoint}{dev_obj_id}/", headers=DEV_HEADERS, json=cleaned_obj)
 
         if response.status_code not in [200, 201]:
-            print(f"❌ Error syncing {endpoint_key} {prod_obj['name']}: {response.text}")
+            print(f"Error syncing {endpoint_key} {prod_obj['name']}: {response.text}")
 
 if __name__ == "__main__":
     # Fetch related objects from Dev to use for ID mapping
