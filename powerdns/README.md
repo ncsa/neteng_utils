@@ -1,6 +1,6 @@
 PowerDNS sync script:
 
-Credit:  Original code by github.com/matejv
+Credit:  Original code by github.com/matejv (https://gist.github.com/matejv/c59230ee723c5853a175c4c66b71e092)
 
 
 There are several scripts in this directory providing various tasks.  Most of these scripts are for the use with Netbox and the netbox-dns-plugin (https://github.com/peteeckel/netbox-plugin-dns) and using PowerDNS as your authorative DNS Server.

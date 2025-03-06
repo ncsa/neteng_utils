@@ -1,6 +1,6 @@
 ## Netbox Tenant Validator
 
-#### Credit to:  Reddit.com/u/pythbit
+#### Credit to: https://github.com/Pythbit/netbox_tenant_validator
 
 
 
