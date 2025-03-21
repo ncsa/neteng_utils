@@ -5,8 +5,8 @@ import dns.zone
 import dns.rdatatype
 import pynetbox
 
-# Configuration
-NETBOX_URL = "https://<netbox-url>"  # e.g., https://netbox.example.com
+# Netbox API Endpoint Configuration
+NETBOX_URL = "https://<netbox-url>"
 NETBOX_API_TOKEN = "TOKEN"
 ZONES_DIRECTORY = "zones"
 EXCLUDED_TYPES = {
