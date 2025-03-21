@@ -3,90 +3,72 @@
 import os
 import dns.zone
 import dns.rdatatype
-import requests
+import pynetbox
 
 # Configuration
-NETBOX_URL = "https://<netbox-url>/api/plugins/netbox-dns/records/"
-NETBOX_ZONES_URL = "https://<netbox-url>/api/plugins/netbox-dns/zones/"
+NETBOX_URL = "https://<netbox-url>"  # e.g., https://netbox.example.com
 NETBOX_API_TOKEN = "TOKEN"
 ZONES_DIRECTORY = "zones"
-EXCLUDED_TYPES = {dns.rdatatype.A, dns.rdatatype.AAAA, dns.rdatatype.PTR, dns.rdatatype.SOA}
+EXCLUDED_TYPES = {
+    dns.rdatatype.A,
+    dns.rdatatype.AAAA,
+    dns.rdatatype.PTR,
+    dns.rdatatype.SOA,
+}
 
-# Headers for Netbox API
-def get_headers():
-    return {
-        "Authorization": f"Token {NETBOX_API_TOKEN}",
-        "Content-Type": "application/json"
-    }
+# Initialize pynetbox API client
+nb = pynetbox.api(NETBOX_URL, token=NETBOX_API_TOKEN)
 
 def get_zone_id(zone_name):
-    response = requests.get(f"{NETBOX_ZONES_URL}?name={zone_name}", headers=get_headers())
-    if response.status_code == 200:
-        results = response.json().get("results", [])
-        if results:
-            return results[0]["id"]
+    results = nb.plugins.netbox_dns.zones.filter(name=zone_name)
+    for zone in results:
+        return zone.id
     return None
 
 def get_existing_records(zone_id):
-    response = requests.get(f"{NETBOX_URL}?zone_id={zone_id}", headers=get_headers())
-    if response.status_code == 200:
-        return {(rec["name"], rec["type"], rec["value"]) for rec in response.json().get("results", [])}
-    return set()
-
-import dns.zone
-import dns.rdatatype
+    records = nb.plugins.netbox_dns.records.filter(zone_id=zone_id)
+    return {(r.name, r.type, r.value) for r in records}
 
 def parse_zone_file(zone_file, zone_name):
     records = []
     try:
-        zone = dns.zone.from_file(zone_file, zone_name, relativize=False)  # Keep full names
+        zone = dns.zone.from_file(zone_file, zone_name, relativize=False)
         for name, node in zone.nodes.items():
             for rdataset in node.rdatasets:
                 if rdataset.rdtype not in EXCLUDED_TYPES:
                     for rdata in rdataset:
-                        record_name = str(name).rstrip('.')  # Remove trailing dot
-                        
-                        # Handle Apex ("@") domain
+                        record_name = str(name).rstrip('.')
+
                         if record_name == "@":
                             record_name = ""
-                        else:
-                            # Ensure the record name does not contain the full zone name
-                            if record_name.endswith(f".{zone_name.rstrip('.')}"):
-                                record_name = record_name.replace(f".{zone_name.rstrip('.')}", "")
+                        elif record_name.endswith(f".{zone_name.rstrip('.')}"):
+                            record_name = record_name.replace(f".{zone_name.rstrip('.')}", "")
 
                         record_type = dns.rdatatype.to_text(rdataset.rdtype)
-                        record_ttl = rdataset.ttl  # Extract TTL
+                        record_ttl = rdataset.ttl
 
-                        # Extract the correct record value
                         if record_type == "MX":
                             record_value = f"{rdata.preference} {str(rdata.exchange).rstrip('.')}."
                         elif record_type == "SRV":
                             record_value = f"{rdata.priority} {rdata.weight} {rdata.port} {str(rdata.target).rstrip('.')}."
-                        elif record_type == "CNAME":
+                        elif record_type in {"CNAME", "NS"}:
                             record_value = f"{str(rdata).rstrip('.')}."
-                        elif record_type == "NS":
-                            record_value = f"{str(rdata).rstrip('.')}."
-#                        elif record_type == "TXT":
-#                            record_value = " ".join(rdata.strings)  # TXT records can have multiple parts
                         elif record_type == "SOA":
-                            # Ensure MNAME and RNAME do not get double periods
                             mname = str(rdata.mname).rstrip('.')
                             rname = str(rdata.rname).rstrip('.')
                             record_value = f"{mname}. {rname}. {rdata.serial} {rdata.refresh} {rdata.retry} {rdata.expire} {rdata.minimum}"
                         else:
                             record_value = str(rdata)
 
-                        record = {
-                            "name": record_name,  # Store only subdomain
+                        records.append({
+                            "name": record_name,
                             "type": record_type,
                             "value": record_value,
-                            "ttl": record_ttl  # Store TTL from BIND
-                        }
-                        records.append(record)
+                            "ttl": record_ttl,
+                        })
     except Exception as e:
         print(f"Error parsing {zone_file}: {e}")
     return records
-
 
 def upload_to_netbox(records, zone_id):
     existing_records = get_existing_records(zone_id)
@@ -95,26 +77,24 @@ def upload_to_netbox(records, zone_id):
         if record_tuple not in existing_records:
             record["zone"] = zone_id
             try:
-                response = requests.post(NETBOX_URL, json=record, headers=get_headers())
-                if response.status_code in [200, 201]:
-                    print(f"Successfully added record: {record}")
-                elif response.status_code == 400 and "There is already an active" in response.text:
-                    print(f"Record Already exists in zone {zone_id}: {record}")
+                nb.plugins.netbox_dns.records.create(record)
+                print(f"Added: {record}")
+            except pynetbox.RequestError as e:
+                if e.error and "There is already an active" in str(e.error):
+                    print(f"Record already exists in zone {zone_id}: {record}")
                 else:
-                    print(f"Failed to add record {record}: {response.text}")
-            except Exception as e:
-                print(f"Error uploading record {record}: {e}")
+                    print(f"Failed to add record {record}: {e.error}")
 
 def main():
     for filename in os.listdir(ZONES_DIRECTORY):
         zone_path = os.path.join(ZONES_DIRECTORY, filename)
-        zone_name = filename  # Use filename as the zone name
+        zone_name = filename  # Use filename as zone name
         zone_id = get_zone_id(zone_name)
         if zone_id:
             records = parse_zone_file(zone_path, zone_name)
             upload_to_netbox(records, zone_id)
         else:
-            print(f"Zone {zone_name} not found in Netbox")
+            print(f"Zone not found in NetBox: {zone_name}")
 
 if __name__ == "__main__":
     main()
