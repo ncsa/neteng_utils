@@ -6,7 +6,7 @@ import re
 import subprocess
 
 # NetBox API setup
-url = "https://<NETBOX-URL"
+url = "https://<NETBOX-URL>"
 token = "API TOKEN"
 nb = pynetbox.api(url, token=token)
 

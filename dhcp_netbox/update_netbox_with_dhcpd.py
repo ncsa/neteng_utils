@@ -1,12 +1,11 @@
 #!/usr/bin/python3
 
 import re
-import requests
+import pynetbox
 
 # NetBox Configuration
-# Netbox API configuration
 NETBOX_URL = 'https://<NETBOX-URL>/api/'
-NETBOX_TOKEN = '<API_TOKEN>xA'
+NETBOX_TOKEN = '<API_TOKEN>'
 CUSTOM_FIELD_NAME = "mac_address"
 
 # File containing ISC dhcpd.conf
@@ -18,12 +17,8 @@ HOST_RESERVATION_REGEX = re.compile(
     re.DOTALL
 )
 
-# Headers for NetBox API
-HEADERS = {
-    "Authorization": f"Token {NETBOX_TOKEN}",
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-}
+# Initialize pynetbox API instance
+nb = pynetbox.api(NETBOX_URL, token=NETBOX_TOKEN)
 
 def parse_dhcpd_conf(file_path):
     """Extracts host reservations (IP and MAC) from dhcpd.conf."""
@@ -33,24 +28,18 @@ def parse_dhcpd_conf(file_path):
     reservations = {}
     for match in HOST_RESERVATION_REGEX.finditer(content):
         ip_address, fixed_address, mac_address = match.groups()
+        # Using fixed_address as the key which is assumed to be the IP used in NetBox
         reservations[fixed_address] = mac_address.upper()  # Normalize MAC address
     return reservations
 
 def update_netbox_ip(ip, mac):
-    """Updates the custom MAC address field for an IP in NetBox."""
-    url = f"{NETBOX_URL}ipam/ip-addresses/?address={ip}"
-    response = requests.get(url, headers=HEADERS)
-
-    if response.status_code == 200 and response.json()["count"] > 0:
-        ip_id = response.json()["results"][0]["id"]
-        update_url = f"{NETBOX_URL}ipam/ip-addresses/{ip_id}/"
-        update_data = {"custom_fields": {CUSTOM_FIELD_NAME: mac}}
-
-        update_response = requests.patch(update_url, headers=HEADERS, json=update_data)
-        if update_response.status_code == 200:
-            print(f"Updated {ip} with MAC {mac}")
-        else:
-            print(f"Failed to update {ip}: {update_response.text}")
+    """Updates the custom MAC address field for an IP in NetBox using pynetbox."""
+    ip_obj = nb.ipam.ip_addresses.get(address=ip)
+    if ip_obj:
+        # Update the custom field for MAC address and save the change
+        ip_obj.custom_fields[CUSTOM_FIELD_NAME] = mac
+        ip_obj.save()
+        print(f"Updated {ip} with MAC {mac}")
     else:
         print(f"IP {ip} not found in NetBox")
 
