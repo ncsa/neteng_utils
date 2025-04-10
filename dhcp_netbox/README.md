@@ -1,4 +1,4 @@
-Import DHCP Lease information into Netbox:
+Import ISC DHCP (legacy) Lease information into Netbox:
 
 General: 
 
