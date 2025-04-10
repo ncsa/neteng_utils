@@ -30,9 +30,8 @@ The end result for 1.2.3.4 DNS Name will be foo2.bar.com   If you need those add
 
 
 ### update unmanaged_records.py ###
-This script will parse your zone files created by the "zone_transfer.sh" script and will generate MX, SRV, CNAME, NS, etc records in the records section of the netbox-dns-plugin.  You can exclude specific records on this line:
+This script will parse your zone files created by the "zone_transfer.sh" script and will generate MX, SRV, CNAME, and TXT records in the DNS>Records section of the netbox-dns-plugin. 
 
-EXCLUDED_TYPES = {dns.rdatatype.A, dns.rdatatype.AAAA, dns.rdatatype.PTR, dns.rdatatype.SOA}
-
+Note:  NS recourds are not implemented due to how Netbox assicates nameservers with previously defined NS servers in the plugin.   It is possible to do, but not worth the effort at this time.
 
 
