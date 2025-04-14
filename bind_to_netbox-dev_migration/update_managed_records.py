@@ -43,7 +43,6 @@ def extract_dns_records(folder):
 
     return records
 
-
 # Find the most specific prefix containing the IP
 def get_prefix_for_ip(ip):
     print(f"Looking up prefix for IP: {ip}")
