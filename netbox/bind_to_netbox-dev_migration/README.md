@@ -35,3 +35,21 @@ This script will parse your zone files created by the "zone_transfer.sh" script 
 Note:  NS recourds are not implemented due to how Netbox assicates nameservers with previously defined NS servers in the plugin.   It is possible to do, but not worth the effort at this time.
 
 
+### verify_zone_records.py ###
+This script names a zone file (when you did an AXFR with the zone_transfer.sh above) parses the ZONE file and then performs DNS looksup against a DNS server to verify that all DNS entries are present.  This is useful to ensure all records are properly transition into Netbox.
+
+	usage: verify_zone_records.py [-h] [--dns-server DNS_SERVER] 	[--skip-types [SKIP_TYPES ...]] zone_file origin
+
+	Verify zone records against live DNS
+
+	positional arguments:
+	  zone_file             Path to BIND zone file
+	  origin                Zone origin (e.g., example.com.)
+
+	options:
+	  -h, --help            show this help message and exit
+ 	 --dns-server DNS_SERVER
+                    DNS server IP to query (default: system resolver)
+ 	 --skip-types [SKIP_TYPES ...]
+                    RR types to skip (default: SOA NS)
+	Example: ./verify_zone_records.py zones/example.com example.com --dns-server dns1.example.com
