@@ -48,8 +48,6 @@ def backup_device(server):
 
     rsync_base = f"""
         rsync -arv --delete \
-            --exclude /proc --exclude /sys --exclude swap.img \
-            --exclude /services/megawatt --exclude *logfiles* \
             --exclude-from={EXCLUDE_FILE} \
             --rsync-path="sudo rsync" \
             -e "ssh -i {SSH_KEY}" \
