@@ -40,7 +40,7 @@ The script normalizes key values before writing to the state store. Typical reco
   - Other TLDs may lowercase/uppercase or use localized labels
 - The parser normalizes casing and trims extra text (e.g., URL hints after status).
 
-### Example usage
+### Notes
 ```Netbox
 # This script should be installed in Netbox under "Customization" > "Scripts"
 
