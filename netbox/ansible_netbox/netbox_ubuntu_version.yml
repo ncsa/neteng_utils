@@ -1,84 +1,90 @@
 ---
-- name: Update Netbox with Ubuntu OS version
+- name: Update NetBox with Ubuntu OS version
   hosts: platforms_ubuntu
   gather_facts: yes
+
   vars:
-    netbox_api_url: "<NETOBOX_URL>"
-    netbox_token: "<NETBOX_TOKEN>"
+    netbox_api_url: "xxxxxxxxxxxxxxxxxxxxxxxxxxxx" # <-- set me
+    netbox_token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" # <-- set me
+    netbox_validate_certs: true # set to false if NetBox uses self-signed certs
+    platform_slug: "ubuntu"
 
   tasks:
-    - name: Set OS version fact
-      set_fact:
+    - name: Set OS version fact from gathered facts
+      ansible.builtin.set_fact:
         os_version: "{{ ansible_distribution_version }}"
 
-    - name: Look up host in Netbox as device
-      uri:
-        url: "{{ netbox_api_url }}/dcim/devices/?name={{ inventory_hostname }}"
+    # ---- Look up as Device (platform filtered to ubuntu) -----------------------
+    - name: Look up host in NetBox as device (platform=ubuntu)
+      ansible.builtin.uri:
+        url: "{{ netbox_api_url }}/dcim/devices/?name={{ inventory_hostname }}&platform={{ platform_slug }}"
         method: GET
         headers:
           Authorization: "Token {{ netbox_token }}"
-          Content-Type: "application/json"
+          Accept: "application/json"
+        validate_certs: "{{ netbox_validate_certs }}"
+        return_content: true
+        status_code: 200
       register: device_lookup
       failed_when: false
 
-    - name: If found as device, set Netbox ID and type
-      set_fact:
+    - name: Found device? (safe length check)
+      ansible.builtin.set_fact:
         netbox_id: "{{ device_lookup.json.results[0].id }}"
         netbox_object_type: "device"
-      when: device_lookup.json.results | length > 0
+      when: device_lookup.json is defined and (device_lookup.json.results | length) > 0
 
-    - name: Look up host in Netbox as virtual machine if not found as device
-      uri:
-        url: "{{ netbox_api_url }}/virtualization/virtual-machines/?name={{ inventory_hostname }}"
+    # ---- If not a Device, try Virtual Machine (platform=ubuntu) ---------------
+    - name: Look up host in NetBox as virtual machine (platform=ubuntu)
+      ansible.builtin.uri:
+        url: "{{ netbox_api_url }}/virtualization/virtual-machines/?name={{ inventory_hostname }}&platform={{ platform_slug }}"
         method: GET
         headers:
           Authorization: "Token {{ netbox_token }}"
-          Content-Type: "application/json"
+          Accept: "application/json"
+        validate_certs: "{{ netbox_validate_certs }}"
+        return_content: true
+        status_code: 200
       register: vm_lookup
-      when: device_lookup.json.results | length == 0
+      when: netbox_object_type is not defined
       failed_when: false
 
-    - name: If found as virtual machine, set Netbox ID and type
-      set_fact:
+    - name: Found VM? (safe length check)
+      ansible.builtin.set_fact:
         netbox_id: "{{ vm_lookup.json.results[0].id }}"
         netbox_object_type: "virtual_machine"
-      when: (device_lookup.json.results | length == 0) and (vm_lookup.json.results | length > 0)
+      when: vm_lookup.json is defined and (vm_lookup.json.results | length) > 0
 
-    - name: Fail if host not found in Netbox
-      fail:
-        msg: "Host {{ inventory_hostname }} not found in Netbox as device or virtual machine."
-      when: (device_lookup.json.results | length == 0) and ( (vm_lookup is not defined) or (vm_lookup.json.results | length == 0) )
+    # ---- Fail clearly if nothing matched (or platform not ubuntu) -------------
+    - name: Fail if host not found with platform=ubuntu
+      ansible.builtin.fail:
+        msg: >-
+          Host {{ inventory_hostname }} not found in NetBox as a Device or Virtual Machine
+          with platform={{ platform_slug }}.
+      when: netbox_object_type is not defined
 
-    - name: Update OS version for device in Netbox
-      uri:
-        url: "{{ netbox_api_url }}/dcim/devices/{{ netbox_id }}/"
+    # ---- Build endpoint then PATCH once ---------------------------------------
+    - name: Set NetBox endpoint for PATCH
+      ansible.builtin.set_fact:
+        nb_endpoint: >-
+          {{ 'dcim/devices' if netbox_object_type == 'device' else 'virtualization/virtual-machines' }}
+
+    - name: Update OS version custom field in NetBox
+      ansible.builtin.uri:
+        url: "{{ netbox_api_url }}/{{ nb_endpoint }}/{{ netbox_id }}/"
         method: PATCH
         headers:
           Authorization: "Token {{ netbox_token }}"
           Content-Type: "application/json"
-        body: |
-          {
-            "custom_fields": {
-              "os_version": "{{ os_version }}"
-            }
-          }
+          Accept: "application/json"
+        validate_certs: "{{ netbox_validate_certs }}"
+        body:
+          custom_fields:
+            os_version: "{{ os_version }}"
         body_format: json
-        status_code: [200,202]
-      when: netbox_object_type == "device"
+        status_code: [200, 202]
+      register: patch_result
 
-    - name: Update OS version for virtual machine in Netbox
-      uri:
-        url: "{{ netbox_api_url }}/virtualization/virtual-machines/{{ netbox_id }}/"
-        method: PATCH
-        headers:
-          Authorization: "Token {{ netbox_token }}"
-          Content-Type: "application/json"
-        body: |
-          {
-            "custom_fields": {
-              "os_version": "{{ os_version }}"
-            }
-          }
-        body_format: json
-        status_code: [200,202]
-      when: netbox_object_type == "virtual_machine"
+    - name: Debug result
+      ansible.builtin.debug:
+        msg: "Updated {{ inventory_hostname }} ({{ netbox_object_type }}) os_version={{ os_version }} (HTTP {{ patch_result.status }})"
