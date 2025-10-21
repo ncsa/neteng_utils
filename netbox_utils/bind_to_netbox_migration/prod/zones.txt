@@ -1,0 +1,4 @@
+168.192.in-addr.arpa
+
+domain.com
+something.domain.com

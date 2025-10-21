@@ -1,0 +1,14 @@
+# Python artifacts
+*.py[cod]
+__pycache__/
+*.pyo
+
+# Build directories
+build/
+dist/
+*.egg-info
+
+# Logs or temp files
+*.log
+*.tmp
+*.swp
