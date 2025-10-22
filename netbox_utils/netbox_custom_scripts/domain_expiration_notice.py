@@ -19,7 +19,7 @@ class DomainExpiryNotifier(Script):
 
     recipient_email = StringVar(
         description="Where to send reminders",
-        default="neteng@ncsa.illinois.edu",
+        default="<EMAIL>",
         required=True,
     )
 

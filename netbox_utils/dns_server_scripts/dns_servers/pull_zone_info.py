@@ -44,7 +44,7 @@ while True:
 }};'''
 
             view_block = f'''zone "{zone.name}" {{
-  in-view "ncsa";
+  in-view "default";
 }};'''
 
             if "zone_internal" in tag_slugs:

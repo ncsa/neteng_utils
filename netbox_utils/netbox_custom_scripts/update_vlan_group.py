@@ -17,14 +17,14 @@ class EnsureAllVLANsInDefaultGroup(Script):
 
     class Meta:
         name = "Ensure VLANs are in default group"
-        description = "Assign every VLAN to the VLAN Group with the given slug (default: 'ncsa-default-vlan-group')."
+        description = "Assign every VLAN to the VLAN Group with the given slug (default: 'org-default-vlan-group')."
 
     # Default to DRY RUN (Commit toggle off in the UI)
     commit_default = False
 
     group_slug = StringVar(
         description="Slug of the VLAN Group to enforce",
-        default="ncsa-default-vlan-group",
+        default="org-default-vlan-group",
     )
     create_group_if_missing = BooleanVar(
         description="Create the VLAN Group if it does not exist",
@@ -38,7 +38,7 @@ class EnsureAllVLANsInDefaultGroup(Script):
     # ---- helpers ---------------------------------------------------------------
 
     def _prettify_slug(self, slug: str) -> str:
-        # Turn "ncsa-default-vlan-group" -> "Ncsa Default Vlan Group"
+        # Turn "org-default-vlan-group" -> "Ncsa Default Vlan Group"
         name = slug.replace("-", " ").replace("_", " ").strip()
         return " ".join(word.capitalize() for word in name.split())
 
