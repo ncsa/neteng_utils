@@ -12,7 +12,7 @@ from humanize import naturalsize
 # ==================== CONFIGURATION ====================
 
 NET_V4 = "0.0.0.0/0"
-NET_V6 = "2620:0:0::/48"
+NET_V6 = ""/0"
 
 SCRIPT_PATH = os.path.abspath(__file__)
 SCRIPT_PARENT_DIR = os.path.dirname(SCRIPT_PATH)
@@ -146,4 +146,3 @@ mail_cmd = f"{MAIL_CMD} -s \"{mail_subject}\" {mail_recipients}"
 
 with open(latest_file, "r") as body:
     subprocess.run(mail_cmd, shell=True, stdin=body, check=True)
-

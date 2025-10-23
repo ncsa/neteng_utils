@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 # ==================== CONFIGURATION ====================
 
 NET_V4 = "0.0.0.0/0
-NET_V6 = "2620:0:0::/48"
+NET_V6 = "::/0"
 
 SCRIPT_PATH = os.path.abspath(__file__)
 SCRIPT_PARENT_DIR = os.path.dirname(SCRIPT_PATH)
