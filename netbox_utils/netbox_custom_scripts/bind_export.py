@@ -5,7 +5,7 @@ from extras.scripts import Script
 from jinja2 import Environment, DictLoader
 
 
-ZONE_TEMPLATE = '''\
+ZONE_TEMPLATE = """\
 ;
 ; Zone file for zone {{ zone.name }} [{{ zone.view.name }}]
 ;
@@ -15,7 +15,7 @@ $TTL {{ zone.default_ttl }}
 {% for record in records -%}
 {{ record.name.ljust(32) }}    {{ (record.ttl|string if record.ttl is not none else '').ljust(8) }} IN {{ record.type.ljust(8) }}    {{ record.value }}
 {% endfor %}\
-'''
+"""
 
 
 def rm_tree(path):
@@ -28,29 +28,37 @@ def rm_tree(path):
 
 
 class ZoneExporter(Script):
-
     class Meta:
         name = "Zone Exporter"
-        description = "Export NetBox DNS zones to BIND zone files with hardcoded options"
+        description = (
+            "Export NetBox DNS zones to BIND zone files with hardcoded options"
+        )
         commit_default = True
 
     def run(self, data, commit):
-
         # Hardcoded config
         export_base = Path("/services/bind")
         export_path = export_base / "zonefiles"
         remove_existing_data = True
 
-        jinja_env = Environment(loader=DictLoader({"zone_file": ZONE_TEMPLATE}), autoescape=True)
+        jinja_env = Environment(
+            loader=DictLoader({"zone_file": ZONE_TEMPLATE}), autoescape=True
+        )
         template = jinja_env.get_template("zone_file")
 
         # Step 1: chown to netbox:netbox
         try:
             self.log_info("Temporarily changing ownership to netbox:netbox")
-            subprocess.run(["/usr/bin/sudo", "chown", "-R", "netbox:netbox", str(export_base)],
-                           check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["/usr/bin/sudo", "chown", "-R", "netbox:netbox", str(export_base)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
         except subprocess.CalledProcessError as e:
-            self.log_failure(f"Failed to change ownership to netbox:netbox:\nSTDERR: {e.stderr}")
+            self.log_failure(
+                f"Failed to change ownership to netbox:netbox:\nSTDERR: {e.stderr}"
+            )
             return
 
         try:
@@ -76,30 +84,30 @@ class ZoneExporter(Script):
                     self.export_zones(zones, view.name, export_path, template)
 
         finally:
-            # generate active_zones.conf while still owned by netbox
-            self.log_info("Getting a list of active zones and writing it out to active_zones.conf and split-horizon_zones.conf")
-            try:
-                subprocess.run(["/usr/bin/sudo", "/services/bind/scripts/get_active_zones.py"],
-                               check=True, capture_output=True, text=True)
-                self.log_success("Successfully generated active_zones.conf and split-horizon_zones.conf")
-            except subprocess.CalledProcessError as e:
-                self.log_failure(f"Failed to generate active_zones.conf: {e.stderr.strip() or e}")
-                return
-
             # restore to bind:bind before restarting named
             self.log_info("Restoring ownership to bind:bind")
             try:
-                subprocess.run(["/usr/bin/sudo", "chown", "-R", "bind:bind", str(export_base)],
-                               check=True, capture_output=True, text=True)
+                subprocess.run(
+                    ["/usr/bin/sudo", "chown", "-R", "bind:bind", str(export_base)],
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
             except subprocess.CalledProcessError as e:
-                self.log_failure(f"Failed to restore ownership to bind:bind:\nSTDERR: {e.stderr}")
+                self.log_failure(
+                    f"Failed to restore ownership to bind:bind:\nSTDERR: {e.stderr}"
+                )
                 return
 
         # restart named
         self.log_info("Attempting to refresh 'named' using rndc")
         try:
-            subprocess.run(["/usr/bin/sudo", "/services/bind/scripts/bind_reconfig.sh"],
-                           check=True, capture_output=True, text=True)
+            subprocess.run(
+                ["/usr/bin/sudo", "/services/bind/scripts/bind_reconfig.sh"],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
             self.log_success("Successfully restarted 'named'.")
         except subprocess.CalledProcessError as e:
             self.log_failure(f"Failed to restart 'named': {e.stderr.strip() or e}")
